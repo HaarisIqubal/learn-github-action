@@ -1,0 +1,45 @@
+name: Auto Merge and Clean Up
+
+on:
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  auto-merge:
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code and fetch all branches
+      - name: Checkout code and fetch all branches
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Ensures all branches are fetched, not just the current one.
+
+      # Step 2: Configure Git
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Step 3: Fetch the feature branch explicitly
+      - name: Fetch feature branch
+        run: |
+          git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+
+      # Step 4: Checkout the development branch
+      - name: Checkout development branch
+        run: |
+          git checkout development
+
+      # Step 5: Merge the feature branch into development
+      - name: Merge feature branch into development
+        run: |
+          git merge origin/${{ github.head_ref }} --no-ff -m "Automated merge from ${{ github.head_ref }} to development"
+          git push origin development
+
+      # Step 6: Delete the feature branch after merging
+      - name: Delete the feature branch
+        run: |
+          git push origin --delete ${{ github.head_ref }}
