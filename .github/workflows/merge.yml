@@ -1,0 +1,43 @@
+name: Auto Merge and Clean Up
+
+on:
+  workflow_run:
+    workflows:
+      - Run Tests
+    types:
+      - completed
+
+jobs:
+  auto-merge:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Step 2: Configure Git for GitHub Actions
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      # Step 3: Fetch feature branch
+      - name: Fetch feature branch
+        run: git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+
+      # Step 4: Merge feature branch into development
+      - name: Merge branch if tests pass
+        run: |
+          git checkout development
+          git merge ${{ github.head_ref }}
+          git push origin development
+
+      # Step 5: Delete the feature branch after merging
+      - name: Delete the feature branch
+        run: |
+          git push origin --delete ${{ github.head_ref }}
