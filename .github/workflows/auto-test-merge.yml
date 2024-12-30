@@ -40,17 +40,22 @@ jobs:
       - name: Fetch feature branch
         run: git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
 
-      # Step 6: Automatically merge if tests pass
-      - name: Merge branch if tests pass
-        if: success()
+      # Step 6: Configure Git for GitHub Actions
+      - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      # Step 7: Merge branch if tests pass
+      - name: Merge branch if tests pass
+        if: success()
+        run: |
           git checkout development
           git merge ${{ github.head_ref }}
           git push origin development
 
-      # Step 7: Delete the feature branch after merging
+      # Step 8: Delete the feature branch after merging
       - name: Delete the feature branch
         if: success()
         run: |
