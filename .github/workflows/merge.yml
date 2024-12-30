@@ -1,6 +1,9 @@
 name: Auto Merge and Clean Up
 
 on:
+  pull_request:
+    branches:
+        - development
   workflow_run:
     workflows:
       - Run Tests
