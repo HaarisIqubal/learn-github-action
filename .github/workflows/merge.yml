@@ -1,12 +1,27 @@
 name: Auto Merge and Clean Up
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - development
 
 jobs:
   auto-merge:
+    if: ${{ success() }}
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Debug Trigger
-        run: echo "Workflow manually triggered!"
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Merge branch
+        run: |
+          git checkout development
+          git merge ${{ github.head_ref }}
+          git push origin development
+      - name: Delete feature branch
+        run: |
+          git push origin --delete ${{ github.head_ref }}
