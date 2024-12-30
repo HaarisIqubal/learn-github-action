@@ -11,31 +11,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # Step 1: Checkout code and fetch all branches
+      - name: Checkout code and fetch all branches
         uses: actions/checkout@v3
         with:
-            fetch-depth: 0
-      # Step 5: Fetch feature branch
-    #   - name: Fetch feature branch
-    #     run: git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+          fetch-depth: 0  # Ensures all branches are fetched, not just the current one.
 
-      # Step 6: Configure Git for GitHub Actions
+      # Step 2: Configure Git
       - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
-      # Step 7: Merge branch if tests pass
-      - name: Merge branch if tests pass
-        if: success()
+      # Step 3: Fetch the feature branch explicitly
+      - name: Fetch feature branch
+        run: |
+          git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+
+      # Step 4: Checkout the development branch
+      - name: Checkout development branch
         run: |
           git checkout development
-          git merge ${{ github.head_ref }}
+
+      # Step 5: Merge the feature branch into development
+      - name: Merge feature branch into development
+        run: |
+          git merge origin/${{ github.head_ref }} --no-ff -m "Automated merge from ${{ github.head_ref }} to development"
           git push origin development
 
-      # Step 8: Delete the feature branch after merging
+      # Step 6: Delete the feature branch after merging
       - name: Delete the feature branch
-        if: success()
         run: |
           git push origin --delete ${{ github.head_ref }}
